@@ -1,945 +1,604 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Max OS 98</title>
-    <link rel="stylesheet" href="https://unpkg.com/98.css" />
+    <title>Windows 98</title>
+    <link rel="icon" href="https://win98icons.alexmeub.com/icons/png/computer-3.png" type="image/png">
     <style>
-        /* 2. 添加基础样式以模仿 Win98 桌面 */
-        body {
-            font-family: 'Pixelated MS Sans Serif', 'Tahoma', 'Geneva', 'Arial', sans-serif;
-            overflow: hidden; /* Prevent scrolling */
-            cursor: default;
-            user-select: none; /* Prevent text selection during drag */
-            background-color: #008080; /* Win98 经典桌面蓝绿色 */
-        }
+        /* 引入 98.css */
+        @import url("https://unpkg.com/98.css");
 
-        #desktop-area {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            padding-top: 8px; /* 留出空间 */
-        }
-
-        /* 桌面图标样式 (98.css 没有标准) */
-        .desktop-icon {
-            position: absolute;
-            width: 75px;
-            height: 80px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding-top: 4px;
-            cursor: pointer;
-            color: #FFFFFF; /* Win98 桌面图标文字为白色 */
-            font-size: 13px;
-            line-height: 1.2;
-            text-align: center;
-            transition: background-color 0.1s ease-in-out;
-            z-index: 10;
-        }
-        .desktop-icon .icon-container {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .desktop-icon .icon-container svg {
-            width: 100%;
+        body, html {
             height: 100%;
-        }
-        /* 选中状态 */
-        .desktop-icon:hover, .desktop-icon.selected {
-            background-color: #000080; /* 系统蓝色 */
-            color: #FFFFFF;
-        }
-        .desktop-icon.dragging {
-            opacity: 0.7;
-            cursor: grabbing;
+            margin: 0;
+            overflow: hidden;
+            font-family: "Pixelated MS Sans Serif", "Tahoma", "Arial", sans-serif;
+            background-color: #008080; /* Windows 98 经典桌面背景色 */
         }
 
-        /* 窗口内的图标网格 */
-        .icons-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 5px;
-            padding: 5px;
-            flex-grow: 1;
+        #desktop {
+            height: calc(100% - 28px);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: 4px;
         }
-        .explorer-item {
+
+        .desktop-icon {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding: 4px;
-            cursor: pointer;
-            color: #000000;
-            font-size: 12px;
             text-align: center;
-            height: 70px;
+            width: 80px;
+            margin: 10px;
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid transparent;
         }
-        .explorer-item .icon-container {
+
+        .desktop-icon:focus {
+            background-color: #000080;
+            color: white;
+            border: 1px dotted white;
+            outline: none;
+        }
+        
+        .desktop-icon:focus img {
+            filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(180deg) brightness(100%) contrast(100%);
+        }
+
+        .desktop-icon img {
             width: 32px;
             height: 32px;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
+        }
+
+        .desktop-icon span {
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* 任务栏 */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            background-color: #c0c0c0;
+            border-top: 2px solid #ffffff;
             display: flex;
             align-items: center;
-            justify-content: center;
+            padding: 0 2px;
+            z-index: 10000;
         }
-        .explorer-item .icon-container svg {
-            width: 100%;
+
+        .start-button {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+        }
+        
+        .start-button img {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+        }
+
+        .taskbar-items {
+            flex-grow: 1;
+            display: flex;
             height: 100%;
+            align-items: center;
+            margin-left: 4px;
         }
-        .explorer-item span {
+
+        .taskbar-item {
+            display: flex;
+            align-items: center;
+            height: 22px;
+            padding: 0 6px;
+            margin-right: 2px;
+            max-width: 150px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            width: 100%;
-        }
-        .explorer-item:hover, .explorer-item.selected {
-            background-color: #000080; /* System blue */
-            color: #FFFFFF;
         }
 
-        /* TextEdit 文本区域 */
-        #textedit-textarea {
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            font-family: 'Monaco', 'Courier New', monospace;
+        .taskbar-item.active {
+            font-weight: bold;
+            box-shadow: inset 1px 1px #000, inset -1px -1px #fff;
+            background: repeating-conic-gradient(#808080 0% 25%, #c0c0c0 0% 50%) 50% / 2px 2px;
         }
         
-        /* 确保窗口内的 .window-body 正确填充 (因为移除了 .macos-content-inset) */
-        .window-body {
-            display: flex;
-            flex-direction: column;
-            overflow: auto; /* 自动显示 98.css 风格的滚动条 */
+        .taskbar-item img {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
         }
-        
-        .window[style*="display: none"] {
-            display: none !important;
+
+        .clock {
+            padding: 0 6px;
+            height: 22px;
+            line-height: 22px;
+            margin-left: auto;
+            border: 1px solid #808080;
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            box-shadow: inset 1px 1px #dfdfdf, 1px 0 #000;
+            margin-right: 2px;
         }
-        .window[style*="display: block"] {
-            display: block !important;
-        }
-        
-        /* 加载覆盖层 */
-        .loading-overlay {
+
+        /* 开始菜单 */
+        #start-menu {
             position: absolute;
-            top: 0;
+            bottom: 28px;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 180px;
+            background-color: #c0c0c0;
+            border: 2px solid;
+            border-top-color: #fff;
+            border-left-color: #fff;
+            border-right-color: #000;
+            border-bottom-color: #000;
+            padding: 2px;
+            display: none; /* 默认隐藏 */
             z-index: 9999;
-            color: white;
+        }
+        
+        #start-menu-sidebar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 24px;
+            background: #808080;
+            color: #c0c0c0;
+            writing-mode: vertical-lr;
+            text-orientation: upright;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
             font-size: 18px;
             font-weight: bold;
+            padding-right: 2px;
         }
-        .loading-overlay .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        #start-menu-sidebar span {
+            color: white;
+            margin-left: -4px;
         }
 
-        /* 模态框 (98.css 没有标准模态框覆盖层) */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .start-menu-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            margin-left: 26px; /* 为侧边栏留出空间 */
+        }
+        
+        .start-menu-list li {
+            padding: 5px 10px 5px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .start-menu-list li:hover {
+            background-color: #000080;
+            color: white;
+        }
+        
+        .start-menu-list img {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        
+        .start-menu-separator {
+            height: 1px;
+            background-color: #808080;
+            border-bottom: 1px solid #fff;
+            margin: 4px 0;
+        }
+        
+        /* 窗口自定义样式 */
+        .window {
+            position: absolute;
+            min-width: 200px;
+            min-height: 150px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .window .title-bar {
+            cursor: move;
+        }
+        
+        .window-content {
+            padding: 10px;
+            background: white;
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+        
+        /* 记事本 */
+        #notepad-textarea {
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+            border: none;
+            resize: none;
+            outline: none;
+            font-family: 'Lucida Console', 'Courier New', monospace;
+            font-size: 14px;
         }
+        
+        /* 扫雷 */
+        .minesweeper-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            grid-template-rows: repeat(10, 20px);
+            border: 2px solid;
+            border-top-color: #808080;
+            border-left-color: #808080;
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+        }
+        .mine-cell {
+            width: 20px;
+            height: 20px;
+            background-color: #c0c0c0;
+            border: 2px solid;
+            border-top-color: #fff;
+            border-left-color: #fff;
+            border-right-color: #808080;
+            border-bottom-color: #808080;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .mine-cell.revealed {
+            border: 1px solid #808080;
+        }
+
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col">
-    <div id="desktop-area" class="flex-grow relative px-4 pt-4 pb-8">
-        <div id="databox-icon" class="desktop-icon" style="top: 30px; left: 20px;">
-            <div class="icon-container"></div>
-            <span>我的电脑</span>
-        </div>
-        <div id="trash-icon" class="desktop-icon" style="top: 120px; left: 20px;">
-            <div class="icon-container"></div>
-            <span>回收站</span>
-        </div>
-         <div id="textedit-icon" class="desktop-icon" style="top: 210px; left: 20px;">
-            <div class="icon-container"></div>
-            <span>记事本</span>
-        </div>
-         <div id="hello-icon" class="desktop-icon" style="top: 300px; left: 20px;">
-            <div class="icon-container"></div>
-            <span>示例窗口</span>
-        </div>
+<body>
 
+<div id="desktop">
+    <div class="desktop-icon" tabindex="0" data-app="my-computer">
+        <img src="https://win98icons.alexmeub.com/icons/png/computer-3.png" alt="My Computer">
+        <span>我的电脑</span>
+    </div>
+    <div class="desktop-icon" tabindex="0" data-app="notepad">
+        <img src="https://win98icons.alexmeub.com/icons/png/notepad-1.png" alt="Notepad">
+        <span>记事本</span>
+    </div>
+    <div class="desktop-icon" tabindex="0" data-app="minesweeper">
+        <img src="https://win98icons.alexmeub.com/icons/png/minesweeper-0.png" alt="Minesweeper">
+        <span>扫雷</span>
+    </div>
+</div>
 
-        <div id="hello-window" class="window" style="display: none; left: 100px; top: 80px; width: 400px; height: 300px;">
-            <div class="title-bar">
-                <div class="title-bar-text">Hello!</div>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize"></button>
-                    <button aria-label="Maximize"></button>
-                    <button aria-label="Close"></button>
-                </div>
-            </div>
-            <div class="window-body">
-                <div style="font-size: 12px; margin-bottom: 8px; color: #000000;">
-                    <span>mass:werk 7</span>
-                </div>
-                <div class="icons-grid">
-                    <div class="explorer-item"><div class="icon-container"></div><span>Folder 1</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Folder 2</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Document</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Package</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Disk</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Filled Circle</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Empty Circle</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Checkmark</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Item A</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Item B</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Item C</span></div>
-                    <div class="explorer-item"><div class="icon-container"></div><span>Item D</span></div>
-                </div>
-                </div>
-            <div class="status-bar">
-                <p class="status-bar-field">Hello! 窗口就绪</p>
-                <p class="status-bar-field">Slide 1</p>
-                <p class="status-bar-field">CPU: 5%</p>
-            </div>
-        </div>
+<div id="start-menu">
+    <div id="start-menu-sidebar">
+        <span>Windows</span><span>98</span>
+    </div>
+    <ul class="start-menu-list">
+        <li data-app="notepad">
+            <img src="https://win98icons.alexmeub.com/icons/png/notepad-2.png" alt="Notepad">
+            程序
+        </li>
+        <li>
+            <img src="https://win98icons.alexmeub.com/icons/png/documents-0.png" alt="Documents">
+            文档
+        </li>
+        <li>
+            <img src="https://win98icons.alexmeub.com/icons/png/settings-1.png" alt="Settings">
+            设置
+        </li>
+        <li>
+            <img src="https://win98icons.alexmeub.com/icons/png/search_file-2.png" alt="Find">
+            查找
+        </li>
+        <li class="start-menu-separator"></li>
+        <li id="shutdown-btn">
+            <img src="https://win98icons.alexmeub.com/icons/png/shut_down-3.png" alt="Shut Down">
+            关闭系统...
+        </li>
+    </ul>
+</div>
 
-        <div id="databox-window" class="window" style="display: none; left: 150px; top: 120px; width: 400px; height: 300px;">
-            <div class="title-bar">
-                <div class="title-bar-text">我的电脑</div>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize"></button>
-                    <button aria-label="Maximize"></button>
-                    <button aria-label="Close"></button>
-                </div>
-            </div>
-            <div class="window-body icons-grid" id="databox-window-content-inset">
-                <div class="explorer-item"><div class="icon-container"></div><span>Macintosh HD</span></div>
-                <div class="explorer-item"><div class="icon-container"></div><span>CD-ROM</span></div>
-                <div class="explorer-item"><div class="icon-container"></div><span>Floppy Disk</span></div>
-                <div class="explorer-item"><div class="icon-container"></div><span>Drive A</span></div>
-                <div class="explorer-item"><div class="icon-container"></div><span>Drive B</span></div>
-            </div>
-            <div class="status-bar">
-                <p class="status-bar-field">3 个项目</p>
-                <p class="status-bar-field">1.2 GB 可用</p>
-            </div>
-        </div>
+<div class="taskbar">
+    <button class="start-button" id="start-btn">
+        <img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" alt="Start">
+        Start
+    </button>
+    <div class="sunken-panel" style="width: 2px; height: 22px; margin: 0 2px;"></div>
+    <div class="taskbar-items" id="taskbar-items"></div>
+    <div class="clock" id="clock">12:00 PM</div>
+</div>
 
-        <div id="trash-window" class="window" style="display: none; left: 200px; top: 180px; width: 350px; height: 250px;">
-            <div class="title-bar">
-                <div class="title-bar-text">回收站</div>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize"></button>
-                    <button aria-label="Maximize"></button>
-                    <button aria-label="Close"></button>
-                </div>
-            </div>
-            <div class="window-body" id="trash-window-content-inset" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                <div class="icon-container" style="width:64px; height:64px; margin-bottom: 10px;"></div>
-                <p style="font-size: 13px; color: #000000;">回收站是空的。</p>
-                <p style="font-size: 12px; color: #808080; margin-top: 5px;">请将不需要的文件拖到这里。</p>
-            </div>
-            <div class="status-bar">
-                <p class="status-bar-field">0 个项目</p>
-            </div>
-        </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const desktop = document.getElementById('desktop');
+    const taskbarItems = document.getElementById('taskbar-items');
+    const startBtn = document.getElementById('start-btn');
+    const startMenu = document.getElementById('start-menu');
+    const clock = document.getElementById('clock');
+    
+    let activeWindow = null;
+    let highestZIndex = 100;
+    const openWindows = {};
 
-        <div id="textedit-window" class="window" style="display: none; left: 250px; top: 100px; width: 500px; height: 400px;">
-            <div class="title-bar">
-                <div class="title-bar-text" id="textedit-window-title">无标题 - 记事本</div>
-                <div class="title-bar-controls">
-                    <button aria-label="Minimize"></button>
-                    <button aria-label="Maximize"></button>
-                    <button aria-label="Close"></button>
-                </div>
-            </div>
-            <div class="window-body" style="padding: 0; margin: 0; overflow: hidden;">
-                <div style="display: flex; justify-content: flex-start; gap: 4px; padding: 4px; border-bottom: 1px solid #dfdfdf;">
-                     <button id="textedit-new-doc">新建</button>
-                    <button id="textedit-open-doc">打开</button>
-                    <button id="textedit-save-doc">保存</button>
-                    <button id="textedit-save-as-doc">另存为</button>
-                </div>
-                <div style="flex-grow: 1; padding: 2px;">
-                    <textarea id="textedit-textarea" style="font-family: 'Monaco', 'Courier New', monospace;"></textarea>
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 8px; border-top: 1px solid #dfdfdf;">
-                    <button id="summarize-btn">✨ 总结</button>
-                    <button id="continue-btn">✨ 继续写作</button>
-                </div>
-            </div>
-            <div class="status-bar" id="textedit-status-bar-element">
-                <p class="status-bar-field" id="textedit-status-text">行: 1, 列: 1 | 字数: 0</p>
-            </div>
-        </div>
+    // --- 时钟功能 ---
+    function updateClock() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+        clock.textContent = `${formattedHours}:${formattedMinutes} ${ampm}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-        <div id="message-box-template" class="modal-overlay" style="display: none;">
-            <div class="window" style="min-height: 120px; width: 300px; top: 30%; left: 40%;">
+    // --- 开始菜单 ---
+    startBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startMenu.style.display = startMenu.style.display === 'block' ? 'none' : 'block';
+        startBtn.classList.toggle('active');
+    });
+
+    document.addEventListener('click', () => {
+        startMenu.style.display = 'none';
+        startBtn.classList.remove('active');
+    });
+
+    startMenu.addEventListener('click', (e) => e.stopPropagation());
+    
+    // --- 窗口管理器 ---
+    class WindowManager {
+        constructor(id, title, icon, content, width = 400, height = 300, x = 50, y = 50) {
+            if (openWindows[id]) {
+                openWindows[id].focus();
+                return;
+            }
+
+            this.id = id;
+            this.title = title;
+            this.icon = icon;
+            this.width = width;
+            this.height = height;
+            this.x = x + Object.keys(openWindows).length * 20;
+            this.y = y + Object.keys(openWindows).length * 20;
+            
+            this.minimized = false;
+
+            this.createWindow(content);
+            this.createTaskbarItem();
+            this.focus();
+            
+            openWindows[id] = this;
+        }
+
+        createWindow(content) {
+            this.win = document.createElement('div');
+            this.win.className = 'window';
+            this.win.style.width = `${this.width}px`;
+            this.win.style.height = `${this.height}px`;
+            this.win.style.left = `${this.x}px`;
+            this.win.style.top = `${this.y}px`;
+
+            this.win.innerHTML = `
                 <div class="title-bar">
-                    <div class="title-bar-text" id="message-box-title">消息</div>
+                    <div class="title-bar-text">${this.title}</div>
                     <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
                         <button aria-label="Close"></button>
                     </div>
                 </div>
-                <div class="window-body" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
-                    <div class="icon-container" id="message-box-icon-container" style="width:32px; height:32px; flex-shrink: 0;"></div>
-                    <span id="message-box-text" class="message-box-text" style="flex-grow: 1;">这是一个消息。</span>
+                <div class="window-body" style="padding: 0; margin: 0; height: calc(100% - 21px); display: flex; flex-direction: column;">
+                    ${content}
                 </div>
-                <div class="message-box-buttons" style="display: flex; justify-content: center; padding-bottom: 12px; padding-top: 4px;">
-                    <button id="message-box-ok-button">OK</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="file-dialog-template" class="modal-overlay" style="display: none;">
-            <div class="window" style="width: 350px; top: 30%; left: 40%;">
-                <div class="title-bar">
-                    <div class="title-bar-text" id="file-dialog-title">文件</div>
-                </div>
-                <div class="window-body" style="padding: 15px; display: flex; flex-direction: column; gap: 10px;">
-                    <p id="file-dialog-message"></p>
-                    <input type="text" id="file-dialog-input" placeholder="请输入文件名...">
-                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
-                        <button id="file-dialog-cancel">取消</button>
-                        <button id="file-dialog-ok">确定</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            `;
+            desktop.appendChild(this.win);
+            
+            this.titleBar = this.win.querySelector('.title-bar');
+            this.closeBtn = this.win.querySelector('[aria-label="Close"]');
+            this.minimizeBtn = this.win.querySelector('[aria-label="Minimize"]');
+            this.maximizeBtn = this.win.querySelector('[aria-label="Maximize"]');
+            
+            this.addEventListeners();
+        }
         
-        </div>
+        createTaskbarItem() {
+            this.taskbarItem = document.createElement('button');
+            this.taskbarItem.className = 'taskbar-item';
+            this.taskbarItem.innerHTML = `<img src="${this.icon}" alt="${this.title}"> ${this.title}`;
+            taskbarItems.appendChild(this.taskbarItem);
+            
+            this.taskbarItem.addEventListener('click', () => {
+                if (this.minimized) {
+                    this.restore();
+                } else if (this.win === activeWindow) {
+                    this.minimize();
+                } else {
+                    this.focus();
+                }
+            });
+        }
 
-
-    <script>
-        const desktopArea = document.getElementById('desktop-area');
-        const messageBoxTemplate = document.getElementById('message-box-template');
-        const fileDialogTemplate = document.getElementById('file-dialog-template');
-
-        let activeDraggable = null; // 当前拖动的项目
-        let activeWindow = null;    // 当前激活的窗口
-        let initialX, initialY, xOffset = 0, yOffset = 0;
-        let zIndexCounter = 50;     // 窗口的Z-index基础值
-
-        // 窗口引用
-        const windows = {
-            'hello-window': { element: document.getElementById('hello-window'), title: 'Hello!', icon: 'hello-icon-svg' },
-            'databox-window': { element: document.getElementById('databox-window'), title: '我的电脑', icon: 'databox-icon-svg' },
-            'trash-window': { element: document.getElementById('trash-window'), title: '回收站', icon: 'trash-icon-svg' },
-            'textedit-window': { element: document.getElementById('textedit-window'), title: '记事本', icon: 'textedit-icon-svg' },
-        };
+        addEventListeners() {
+            this.closeBtn.addEventListener('click', () => this.close());
+            this.minimizeBtn.addEventListener('click', () => this.minimize());
+            this.maximizeBtn.addEventListener('click', () => this.toggleMaximize());
+            
+            this.win.addEventListener('mousedown', () => this.focus());
+            
+            // 拖动逻辑
+            let isDragging = false;
+            let dragOffsetX, dragOffsetY;
+            this.titleBar.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragOffsetX = e.clientX - this.win.offsetLeft;
+                dragOffsetY = e.clientY - this.win.offsetTop;
+                this.win.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    this.win.style.left = `${e.clientX - dragOffsetX}px`;
+                    this.win.style.top = `${e.clientY - dragOffsetY}px`;
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                this.win.style.userSelect = '';
+            });
+        }
         
-        // 存储窗口的初始状态 (用于最大化/恢复)
-        const initialWindowStates = {};
-
-        // 简化版的图标 SVG 字典 (仅保留用到的)
-        const iconSvgs = {
-            'databox-icon-svg': `
-                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="10" width="36" height="28" fill="#C0C0C0" stroke="#000" stroke-width="2"/>
-                    <rect x="8" y="12" width="32" height="24" fill="#FFF"/>
-                    <path d="M10 14h28v18H10z" fill="#008080"/>
-                    <path d="M6 30h36v8H6z" fill="#808080" stroke="#000" stroke-width="2"/>
-                    <rect x="10" y="32" width="4" height="4" fill="#C0C0C0" stroke="#000" stroke-width="1"/>
-                    <path d="M30 18h4v4h-4z" fill="#FFFF00"/>
-                </svg>`, // 简化的“我的电脑”图标
-            'trash-icon-svg': `
-                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10 12h28v4H10z" fill="#C0C0C0" stroke="#000" stroke-width="2"/>
-                    <path d="M14 16h20v28H14z" fill="#C0C0C0" stroke="#000" stroke-width="2"/>
-                    <path d="M18 10h12v4H18z" fill="#C0C0C0" stroke="#000" stroke-width="2"/>
-                    <path d="M18 20h4v20h-4zM26 20h4v20h-4z" fill="#808080"/>
-                </svg>`, // 简化的“回收站”图标
-            'textedit-icon-svg': `
-                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="10" y="6" width="28" height="36" fill="#FFF" stroke="#000" stroke-width="2"/>
-                    <path d="M14 12h20M14 18h20M14 24h20M14 30h14" stroke="#000" stroke-width="2"/>
-                    <path d="M28 6v10h10z" fill="#C0C0C0" stroke="#000" stroke-width="1"/>
-                </svg>`, // 简化的“记事本”图标
-            'hello-icon-svg': `
-                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="6" width="36" height="36" fill="#C0C0C0" stroke="#000" stroke-width="2"/>
-                    <text x="24" y="30" font-family="'Pixelated MS Sans Serif', Tahoma" font-size="14" text-anchor="middle" fill="#000" font-weight="bold">Hi!</text>
-                </svg>`,
-            'generic-folder-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 6h10l4 4h14v16H2z" fill="#FFC700" stroke="#000" stroke-width="1"/>
-                </svg>`, // 简化的“文件夹”图标
-            'document-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 2h16l8 8v20H6z" fill="#FFF" stroke="#000" stroke-width="1"/>
-                    <path d="M22 2v8h8z" fill="#E0E0E0" stroke="#000" stroke-width="1"/>
-                    <path d="M10 16h12M10 20h12M10 24h8" stroke="#000" stroke-width="1"/>
-                </svg>`,
-            'package-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="4" y="8" width="24" height="20" fill="#C0C0C0" stroke="#000" stroke-width="1"/>
-                    <rect x="2" y="4" width="28" height="6" fill="#808080" stroke="#000" stroke-width="1"/>
-                </svg>`,
-            'disk-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="4" y="10" width="24" height="12" fill="#808080" stroke="#000" stroke-width="1"/>
-                    <rect x="8" y="12" width="16" height="8" fill="#C0C0C0"/>
-                </svg>`,
-            'macintosh-hd-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="6" width="20" height="20" rx="2" fill="#C0C0C0" stroke="#000" stroke-width="1"/>
-                    <rect x="10" y="10" width="12" height="12" fill="#FFF"/>
-                </svg>`,
-            'cd-rom-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="14" fill="#C0C0C0" stroke="#000" stroke-width="1"/>
-                    <circle cx="16" cy="16" r="4" fill="#FFF"/>
-                </svg>`,
-            'floppy-disk-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="4" y="4" width="24" height="24" fill="#404040" stroke="#000" stroke-width="1"/>
-                    <rect x="8" y="4" width="16" height="14" fill="#C0C0C0"/>
-                    <rect x="10" y="18" width="12" height="10" fill="#808080"/>
-                </svg>`,
-            'info-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="14" fill="#000080" stroke="#FFF" stroke-width="1"/>
-                    <text x="16" y="24" font-family="'Pixelated MS Sans Serif', Tahoma" font-size="20" text-anchor="middle" fill="#FFF" font-weight="bold">i</text>
-                </svg>`,
-            'warning-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="16 2 30 28 2 28" fill="#FFFF00" stroke="#000" stroke-width="1"/>
-                    <text x="16" y="24" font-family="'Pixelated MS Sans Serif', Tahoma" font-size="24" text-anchor="middle" fill="#000" font-weight="bold">!</text>
-                </svg>`,
-            'error-icon-svg': `
-                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="14" fill="#FF0000" stroke="#000" stroke-width="1"/>
-                    <path d="M10 10 L 22 22 M 22 10 L 10 22" stroke="#FFF" stroke-width="4"/>
-                </svg>`
-        };
-
-        // 插入SVG
-        function insertSvg(element, svgKey) {
-            if (element && iconSvgs[svgKey]) {
-                element.innerHTML = '';
-                element.insertAdjacentHTML('beforeend', iconSvgs[svgKey]);
-            } else if (element) {
-                console.warn(`SVG content for key '${svgKey}' not found.`);
-                element.innerHTML = '';
+        focus() {
+            if (activeWindow) {
+                activeWindow.blur();
             }
+            activeWindow = this;
+            this.win.style.zIndex = ++highestZIndex;
+            this.taskbarItem.classList.add('active');
+            this.win.querySelector('.title-bar').classList.add('active');
+            this.minimized = false;
+            this.win.style.display = 'block';
+        }
+        
+        blur() {
+            this.taskbarItem.classList.remove('active');
+            this.win.querySelector('.title-bar').classList.remove('active');
         }
 
-        // --- 全局拖动逻辑 (图标和窗口) ---
-        function globalDragStart(e) {
-            const isWindowTitlebar = e.target.classList.contains('title-bar') || e.target.closest('.title-bar');
-            const isDesktopIcon = e.currentTarget.classList.contains('desktop-icon');
-
-            if (e.button !== 0) return;
-
-            let targetElement = null;
-
-            if (isWindowTitlebar) {
-                targetElement = e.currentTarget.closest('.window');
-                activateWindow(targetElement);
-            } else if (isDesktopIcon) {
-                targetElement = e.currentTarget;
-                document.querySelectorAll('.desktop-icon').forEach(icon => icon.classList.remove('selected'));
-                targetElement.classList.add('selected');
-            } else {
-                return;
-            }
-            
-            activeDraggable = targetElement;
-            activeDraggable.classList.add('dragging');
-
-            const itemRect = activeDraggable.getBoundingClientRect();
-            const desktopRect = desktopArea.getBoundingClientRect();
-            
-            initialX = e.clientX;
-            initialY = e.clientY;
-            xOffset = initialX - itemRect.left;
-            yOffset = initialY - itemRect.top;
-            
-            document.addEventListener('mousemove', globalDrag);
-            document.addEventListener('mouseup', globalDragEnd);
-
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        function globalDrag(e) {
-            if (activeDraggable === null) return;
-            e.preventDefault();
-
-            const desktopRect = desktopArea.getBoundingClientRect();
-            const itemRect = activeDraggable.getBoundingClientRect();
-            
-            let newX = e.clientX - desktopRect.left - xOffset;
-            let newY = e.clientY - desktopRect.top - yOffset;
-
-            // 限制在桌面区域内
-            newX = Math.max(0, newX);
-            newX = Math.min(desktopRect.width - itemRect.width, newX);
-            newY = Math.max(0, newY); // 顶部
-            newY = Math.min(desktopRect.height - itemRect.height, newY); // 底部
-
-            activeDraggable.style.left = `${newX}px`;
-            activeDraggable.style.top = `${newY}px`;
-        }
-
-        function globalDragEnd() {
-            if (activeDraggable === null) return;
-            activeDraggable.classList.remove('dragging');
-            
-            if (!activeDraggable.classList.contains('just-double-clicked')) {
-                document.querySelectorAll('.desktop-icon').forEach(icon => icon.classList.remove('selected'));
-            }
-            activeDraggable.classList.remove('just-double-clicked');
-            activeDraggable = null;
-            document.removeEventListener('mousemove', globalDrag);
-            document.removeEventListener('mouseup', globalDragEnd);
-        }
-
-        // --- 桌面图标功能 ---
-        // 应用拖动监听器
-        document.querySelectorAll('.desktop-icon').forEach(icon => {
-            icon.addEventListener('mousedown', globalDragStart);
-            icon.addEventListener('dblclick', (e) => {
-                e.currentTarget.classList.add('just-double-clicked');
-                const iconId = e.currentTarget.id;
-                
-                if (iconId === 'databox-icon' && windows['databox-window']) {
-                    openWindow(windows['databox-window'].element, windows['databox-window'].title, windows['databox-window'].icon);
-                } else if (iconId === 'trash-icon' && windows['trash-window']) {
-                    openWindow(windows['trash-window'].element, windows['trash-window'].title, windows['trash-window'].icon);
-                } else if (iconId === 'textedit-icon' && windows['textedit-window']) {
-                    openWindow(windows['textedit-window'].element, windows['textedit-window'].title, windows['textedit-window'].icon);
-                } else if (iconId === 'hello-icon' && windows['hello-window']) {
-                    openWindow(windows['hello-window'].element, windows['hello-window'].title, windows['hello-window'].icon);
-                }
-            });
-            icon.addEventListener('click', (e) => {
-                if (activeDraggable === e.currentTarget || e.currentTarget.classList.contains('just-double-clicked')) {
-                    e.currentTarget.classList.remove('just-double-clicked');
-                    return;
-                }
-                document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'));
-                e.currentTarget.classList.add('selected');
-            });
-        });
-
-        // --- 窗口管理 ---
-        function activateWindow(windowElement) {
-            // 98.css 不处理模态框的 z-index，所以我们手动处理
-            if (windowElement.closest('.modal-overlay')) {
-                return;
-            }
-
-            zIndexCounter++;
-            windowElement.style.zIndex = zIndexCounter;
-
-            // 98.css 默认没有 .inactive 状态，所以我们不需要切换 class
-            activeWindow = windowElement;
-        }
-
-        function openWindow(windowElement, title, iconSvgKey) {
-            if (!initialWindowStates[windowElement.id] || windowElement.style.display === 'none') {
-                 initialWindowStates[windowElement.id] = {
-                    top: windowElement.style.top,
-                    left: windowElement.style.left,
-                    width: windowElement.style.width,
-                    height: windowElement.style.height
-                };
-            }
-
-            windowElement.style.display = 'block'; // 98.css 窗口使用 block
-            
-            const titlebarSpan = windowElement.querySelector('.title-bar-text');
-            if (titlebarSpan) titlebarSpan.textContent = title;
-
-            activateWindow(windowElement);
-
-            const titlebar = windowElement.querySelector('.title-bar');
-            if (titlebar) {
-                titlebar.removeEventListener('mousedown', globalDragStart);
-                titlebar.addEventListener('mousedown', globalDragStart);
-            }
-
-            // 绑定窗口控制按钮
-            const closeBtn = windowElement.querySelector('button[aria-label="Close"]');
-            if(closeBtn) closeBtn.onclick = () => closeWindow(windowElement);
-            
-            const minBtn = windowElement.querySelector('button[aria-label="Minimize"]');
-            if(minBtn) minBtn.onclick = () => { windowElement.style.display = 'none'; };
-
-            const maxBtn = windowElement.querySelector('button[aria-label="Maximize"]');
-            if (maxBtn) {
-                let isMaximized = false;
-                maxBtn.onclick = () => {
-                    if (isMaximized) {
-                        windowElement.style.top = initialWindowStates[windowElement.id].top;
-                        windowElement.style.left = initialWindowStates[windowElement.id].left;
-                        windowElement.style.width = initialWindowStates[windowElement.id].width;
-                        windowElement.style.height = initialWindowStates[windowElement.id].height;
-                    } else {
-                        initialWindowStates[windowElement.id] = {
-                            top: windowElement.style.top,
-                            left: windowElement.style.left,
-                            width: windowElement.style.width,
-                            height: windowElement.style.height
-                        };
-                        windowElement.style.top = '0px';
-                        windowElement.style.left = '0px';
-                        windowElement.style.width = '100%';
-                        windowElement.style.height = `100%`;
-                    }
-                    isMaximized = !isMaximized;
-                };
-            }
-            
-            windowElement.addEventListener('mousedown', (e) => {
-                if (!e.target.closest('.title-bar-controls') && !e.target.closest('.title-bar')) {
-                    activateWindow(windowElement);
-                }
-            });
-            
-            // 移除了 setupCustomScrollbar 调用
-        }
-
-        function closeWindow(windowElement) {
-            windowElement.style.display = 'none';
-            if (activeWindow === windowElement) {
+        close() {
+            desktop.removeChild(this.win);
+            taskbarItems.removeChild(this.taskbarItem);
+            delete openWindows[this.id];
+            if (activeWindow === this) {
                 activeWindow = null;
             }
         }
-
-        // --- 消息框 ---
-        function showMessageBox(title, message, iconSvgKey = 'info-icon-svg') {
-            const msgBoxClone = messageBoxTemplate.cloneNode(true);
-            msgBoxClone.id = '';
-
-            const msgTitle = msgBoxClone.querySelector('#message-box-title');
-            const msgText = msgBoxClone.querySelector('#message-box-text');
-            const msgIconContainer = msgBoxClone.querySelector('#message-box-icon-container');
-            const msgOkButton = msgBoxClone.querySelector('#message-box-ok-button');
-            const closeBtn = msgBoxClone.querySelector('button[aria-label="Close"]');
-
-            msgTitle.textContent = title;
-            msgText.textContent = message;
-            insertSvg(msgIconContainer, iconSvgKey);
-
-            msgBoxClone.style.display = 'flex';
-            document.body.appendChild(msgBoxClone);
-
-            const closeMessageBox = () => {
-                msgBoxClone.remove();
-            };
-
-            msgOkButton.onclick = closeMessageBox;
-            if (closeBtn) closeBtn.onclick = closeMessageBox;
-            msgOkButton.focus();
-        }
-
-        // --- 文件对话框 ---
-        function showFileDialog(type, defaultName = '') {
-            return new Promise((resolve, reject) => {
-                const dialogClone = fileDialogTemplate.cloneNode(true);
-                dialogClone.id = 'active-file-dialog';
-
-                const dialogTitle = dialogClone.querySelector('#file-dialog-title');
-                const dialogMessage = dialogClone.querySelector('#file-dialog-message');
-                const dialogInput = dialogClone.querySelector('#file-dialog-input');
-                const dialogOkButton = dialogClone.querySelector('#file-dialog-ok');
-                const dialogCancelButton = dialogClone.querySelector('#file-dialog-cancel');
-
-                if (type === 'save') {
-                    dialogTitle.textContent = '另存为';
-                    dialogMessage.textContent = '将文件另存为:';
-                } else if (type === 'open') {
-                    dialogTitle.textContent = '打开';
-                    dialogMessage.textContent = '打开文件:';
-                }
-                
-                dialogInput.value = defaultName;
-                dialogInput.focus();
-                
-                dialogClone.style.display = 'flex';
-                document.body.appendChild(dialogClone);
-
-                const closeDialog = () => {
-                    dialogClone.remove();
-                    reject('Dialog closed');
-                };
-
-                dialogOkButton.onclick = () => {
-                    const filename = dialogInput.value.trim();
-                    if (filename) {
-                        dialogClone.remove();
-                        resolve(filename);
-                    } else {
-                        showMessageBox('错误', '名称不能为空。', 'error-icon-svg');
-                    }
-                };
-
-                dialogCancelButton.onclick = closeDialog;
-                dialogInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        dialogOkButton.click();
-                    }
-                });
-            });
+        
+        minimize() {
+            this.win.style.display = 'none';
+            this.minimized = true;
+            this.blur();
+            activeWindow = null;
         }
         
-        // --- 移除了自定义滚动条逻辑 ---
-
-        // 点击桌面空白处
-        desktopArea.addEventListener('mousedown', (e) => {
-            // 如果点击的是桌面本身 (而不是图标或窗口)
-            if (e.target === desktopArea) {
-                 document.querySelectorAll('.desktop-icon').forEach(icon => icon.classList.remove('selected'));
-            }
-        });
-
-        // --- 移除了 Mac OS 菜单栏逻辑 ---
-
-        // --- 记事本 (TextEdit) 特定功能 ---
-        const textEditWindow = document.getElementById('textedit-window');
-        const textEditTextArea = document.getElementById('textedit-textarea');
-        const textEditTitleDisplay = document.getElementById('textedit-window-title');
-        const textEditStatusBarText = document.getElementById('textedit-status-text');
-        const summarizeBtn = document.getElementById('summarize-btn');
-        const continueBtn = document.getElementById('continue-btn');
-
-        let currentFileName = "无标题";
-        let isContentSaved = true;
-
-        function updateTextEditStatusBar() {
-            const text = textEditTextArea.value;
-            const charCount = text.length;
-            const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
-            const lineCount = text.split('\n').length;
-            textEditStatusBarText.textContent = `行: ${lineCount}, 列: ${text.split('\n').pop().length} | 字数: ${wordCount}`;
-            isContentSaved = false;
-            updateTextEditTitle();
-        }
-
-        function updateTextEditTitle() {
-            const titlePrefix = isContentSaved ? '' : '*'; // Win98 风格用 *
-            textEditTitleDisplay.textContent = `${titlePrefix}${currentFileName} - 记事本`;
-        }
-
-        function newTextEditDocument() {
-            if (!isContentSaved && textEditTextArea.value.trim() !== "") {
-                // 实际的 Win98 会弹出一个 "是否保存?" 的模态框
-                // 这里我们用一个简单的 showMessageBox 模拟
-                showMessageBox('警告', '当前文档未保存。', 'warning-icon-svg');
-                // 为简单起见，我们直接重置
-                textEditTextArea.value = '';
-                currentFileName = '无标题';
-                isContentSaved = true;
-                updateTextEditStatusBar();
-                updateTextEditTitle();
-            } else {
-                textEditTextArea.value = '';
-                currentFileName = '无标题';
-                isContentSaved = true;
-                updateTextEditStatusBar();
-                updateTextEditTitle();
-            }
-        }
-
-        async function saveTextEditDocument(saveAs = false) {
-            let filenameToSave = currentFileName;
-            if (saveAs || currentFileName === "无标题") {
-                try {
-                    filenameToSave = await showFileDialog('save', currentFileName === "无标题" ? "新文档.txt" : currentFileName);
-                    if (!filenameToSave.endsWith('.txt')) {
-                        filenameToSave += '.txt';
-                    }
-                } catch (e) {
-                    console.log("Save dialog cancelled.");
-                    return;
-                }
-            }
-
-            try {
-                localStorage.setItem(`textedit_doc_${filenameToSave}`, textEditTextArea.value);
-                currentFileName = filenameToSave;
-                isContentSaved = true;
-                updateTextEditTitle();
-                showMessageBox('保存成功', `文件 "${currentFileName}" 已保存。`, 'info-icon-svg');
-            } catch (error) {
-                showMessageBox('错误', `保存文件时出错: ${error.message}`, 'error-icon-svg');
-                console.error("Error saving document:", error);
-            }
-        }
-
-        async function openTextEditDocument() {
-             if (!isContentSaved && textEditTextArea.value.trim() !== "") {
-                 showMessageBox('警告', '当前文档未保存。', 'warning-icon-svg');
-                 // 不等待，直接打开对话框
-             }
-             await promptAndLoadDocument();
-        }
-
-        async function promptAndLoadDocument() {
-            try {
-                const filenameToOpen = await showFileDialog('open', '*.txt');
-                const content = localStorage.getItem(`textedit_doc_${filenameToOpen}`);
-                if (content !== null) {
-                    textEditTextArea.value = content;
-                    currentFileName = filenameToOpen;
-                    isContentSaved = true;
-                    updateTextEditStatusBar();
-                    updateTextEditTitle();
-                } else {
-                    showMessageBox('错误', `文件 "${filenameToOpen}" 未找到。`, 'error-icon-svg');
-                }
-            } catch (e) {
-                console.log("Open dialog cancelled or file not found.");
-            }
-        }
-
-        function toggleLoading(windowElement, show) {
-            let loadingOverlay = windowElement.querySelector('.loading-overlay');
-            if (show) {
-                if (!loadingOverlay) {
-                    loadingOverlay = document.createElement('div');
-                    loadingOverlay.classList.add('loading-overlay');
-                    loadingOverlay.innerHTML = '<div class="spinner"></div><span>正在处理...</span>';
-                    // 附加到 window-body
-                    windowElement.querySelector('.window-body').appendChild(loadingOverlay);
-                }
-                loadingOverlay.style.display = 'flex';
-            } else {
-                if (loadingOverlay) {
-                    loadingOverlay.style.display = 'none';
-                }
-            }
-        }
-
-        async function performLLMOperation(operationType) {
-            const currentText = textEditTextArea.value;
-            if (!currentText.trim()) {
-                showMessageBox('错误', '文本区域为空，请先输入一些文本。', 'error-icon-svg');
-                return;
-            }
-
-            toggleLoading(textEditWindow, true);
-
-            let prompt = "";
-            let apiResponse = "";
-
-            try {
-                if (operationType === 'summarize') {
-                    prompt = `Summarize the following text:\n\n${currentText}`;
-                } else if (operationType === 'continue') {
-                    prompt = `Continue the following text, adding a logical continuation:\n\n${currentText}`;
-                }
-
-                // ... [API 调用逻辑保持不变] ...
-                // 模拟 API 调用延迟
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                if (operationType === 'summarize') {
-                     apiResponse = "这是一个模拟的总结结果。";
-                } else {
-                     apiResponse = "\n这是一个模拟的续写内容。";
-                }
-                // ... [API 错误处理保持不变] ...
-            }
-            catch (error) {
-                apiResponse = `发生错误: ${error.message}`;
-            }
-            finally {
-                toggleLoading(textEditWindow, false);
-
-                if (operationType === 'summarize') {
-                    showMessageBox('总结结果', apiResponse, 'info-icon-svg');
-                } else if (operationType === 'continue') {
-                    textEditTextArea.value += apiResponse;
-                    isContentSaved = false;
-                    updateTextEditStatusBar();
-                }
-            }
-        }
-
-        if (summarizeBtn) {
-            summarizeBtn.addEventListener('click', () => performLLMOperation('summarize'));
-        }
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => performLLMOperation('continue'));
-        }
-
-        if (textEditTextArea) {
-            textEditTextArea.addEventListener('input', updateTextEditStatusBar);
-            document.getElementById('textedit-new-doc').addEventListener('click', newTextEditDocument);
-            document.getElementById('textedit-open-doc').addEventListener('click', openTextEditDocument);
-            document.getElementById('textedit-save-doc').addEventListener('click', () => saveTextEditDocument(false));
-            document.getElementById('textedit-save-as-doc').addEventListener('click', () => saveTextEditDocument(true));
+        restore() {
+            this.win.style.display = 'block';
+            this.minimized = false;
+            this.focus();
         }
         
-        // --- 移除了壁纸设置功能 (98.css 不强调这个) ---
-
-        // --- 页面加载完成时 ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // 桌面图标
-            insertSvg(document.querySelector('#databox-icon .icon-container'), 'databox-icon-svg');
-            insertSvg(document.querySelector('#trash-icon .icon-container'), 'trash-icon-svg');
-            insertSvg(document.querySelector('#textedit-icon .icon-container'), 'textedit-icon-svg');
-            insertSvg(document.querySelector('#hello-icon .icon-container'), 'hello-icon-svg');
-
-            // Hello 窗口图标
-            document.querySelectorAll('.hello-window-icons-grid .explorer-item .icon-container').forEach((el, i) => {
-                const icons = ['generic-folder-icon-svg', 'generic-folder-icon-svg', 'document-icon-svg', 'package-icon-svg', 'disk-icon-svg', 'document-icon-svg', 'document-icon-svg', 'document-icon-svg', 'document-icon-svg', 'document-icon-svg', 'document-icon-svg', 'document-icon-svg'];
-                insertSvg(el, icons[i % icons.length]);
-            });
-
-            // DataBox 窗口图标
-            insertSvg(document.querySelectorAll('#databox-window .explorer-item .icon-container')[0], 'macintosh-hd-icon-svg');
-            insertSvg(document.querySelectorAll('#databox-window .explorer-item .icon-container')[1], 'cd-rom-icon-svg');
-            insertSvg(document.querySelectorAll('#databox-window .explorer-item .icon-container')[2], 'floppy-disk-icon-svg');
-            insertSvg(document.querySelectorAll('#databox-window .explorer-item .icon-container')[3], 'disk-icon-svg');
-            insertSvg(document.querySelectorAll('#databox-window .explorer-item .icon-container')[4], 'disk-icon-svg');
-
-            // Trash 窗口图标
-            insertSvg(document.querySelector('#trash-window .icon-container'), 'trash-icon-svg');
-
-            // 确保所有窗口初始隐藏
-            Object.values(windows).forEach(win => {
-                if (win.element) win.element.style.display = 'none';
-            });
-            
-            // 记事本状态栏
-            if (textEditTextArea) {
-                updateTextEditStatusBar();
+        toggleMaximize() {
+            if (this.isMaximized) {
+                this.win.style.width = this.prevWidth;
+                this.win.style.height = this.prevHeight;
+                this.win.style.left = this.prevLeft;
+                this.win.style.top = this.prevTop;
+                this.isMaximized = false;
+            } else {
+                this.prevWidth = this.win.style.width;
+                this.prevHeight = this.win.style.height;
+                this.prevLeft = this.win.style.left;
+                this.prevTop = this.win.style.top;
+                
+                this.win.style.width = '100%';
+                this.win.style.height = `calc(100% - ${28}px)`;
+                this.win.style.left = '0';
+                this.win.style.top = '0';
+                this.isMaximized = true;
             }
-            
-            // 自动打开“我的电脑”和“记事本”作为演示
-            openWindow(windows['databox-window'].element, windows['databox-window'].title, windows['databox-window'].icon);
-            openWindow(windows['textedit-window'].element, windows['textedit-window'].title, windows['textedit-window'].icon);
+        }
+    }
 
+    // --- 应用程序定义 ---
+    const appDefinitions = {
+        'my-computer': {
+            title: '我的电脑',
+            icon: 'https://win98icons.alexmeub.com/icons/png/computer-3.png',
+            content: `
+                <div class="window-content" style="background: white;">
+                    <p> (C:) </p>
+                    <p> (D:) </p>
+                    <p> 控制面板 </p>
+                </div>
+            `,
+            width: 300,
+            height: 250
+        },
+        'notepad': {
+            title: '无标题 - 记事本',
+            icon: 'https://win98icons.alexmeub.com/icons/png/notepad-1.png',
+            content: `
+                <div class="status-bar" style="height:20px; font-size:12px; padding-left:2px;">
+                    <p class="status-bar-field">文件</p>
+                    <p class="status-bar-field">编辑</p>
+                    <p class="status-bar-field">帮助</p>
+                </div>
+                <textarea id="notepad-textarea"></textarea>
+            `,
+            width: 500,
+            height: 400
+        },
+        'minesweeper': {
+            title: '扫雷',
+            icon: 'https://win98icons.alexmeub.com/icons/png/minesweeper-0.png',
+            content: `
+                 <div class="window-content" style="display:flex; flex-direction:column; align-items:center; background: #c0c0c0; padding: 10px;">
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:10px; padding:5px; border: 2px inset #c0c0c0;">
+                        <div class="sunken-panel" style="padding:2px 5px; font-family:monospace; color:red; font-size:18px;">010</div>
+                        <button>🙂</button>
+                        <div class="sunken-panel" style="padding:2px 5px; font-family:monospace; color:red; font-size:18px;">000</div>
+                    </div>
+                    <div class="minesweeper-grid">
+                        ${Array(100).fill('<div class="mine-cell"></div>').join('')}
+                    </div>
+                </div>
+            `,
+            width: 250,
+            height: 350
+        }
+    };
+    
+    function openApp(appId) {
+        const app = appDefinitions[appId];
+        if (app) {
+            new WindowManager(appId, app.title, app.icon, app.content, app.width, app.height);
+        }
+        startMenu.style.display = 'none';
+        startBtn.classList.remove('active');
+    }
+
+    // --- 桌面图标和开始菜单的事件绑定 ---
+    document.querySelectorAll('[data-app]').forEach(el => {
+        el.addEventListener('dblclick', () => openApp(el.dataset.app));
+        el.addEventListener('click', (e) => {
+            if (e.currentTarget.parentElement.id === 'start-menu-list') {
+                openApp(el.dataset.app)
+            }
         });
+    });
 
-    </script>
+    // 关机按钮
+    document.getElementById('shutdown-btn').addEventListener('click', () => {
+        alert('现在可以安全地关闭计算机了。');
+    });
+});
+</script>
+
 </body>
 </html>
